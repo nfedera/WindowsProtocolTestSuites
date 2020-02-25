@@ -165,17 +165,14 @@ public class SUTControl
     {
         try
         {
+            String fileName = File.createTempFile("rdpclient-", ".bmp").getAbsolutePath();
+            Boolean keepScreenShots = Boolean.parseBoolean(config.getProperty("KeepScreenShots"));
+
             // using import to take screen shot, please install it, or using other tool instead
             // Java's screenshot method (Robot.createScreenCapture) is not works well on Ubuntu.
-            Runtime.getRuntime().exec("import -window RDPClient /home/pettest/ttt.bmp");
+            Runtime.getRuntime().exec("import -window RDPClient " + fileName).waitFor();
 
-            // wait the capture done and the graphic file created
-            // Need to set a timeout here, preventing endless wait if import tool error
-            while(!new File("/home/pettest/ttt.bmp").exists())
-            {
-                Thread.sleep(100);
-            }
-            File imageFile = new File("/home/pettest/ttt.bmp");
+            File imageFile = new File(fileName);
             BufferedImage screenShot = ImageIO.read(imageFile);
             int bufferSize = screenShot.getWidth()* screenShot.getHeight()*3 + 8;
             ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
@@ -194,6 +191,10 @@ public class SUTControl
                     buffer.put((byte)col.getBlue());
                 }
             }
+
+            if (!keepScreenShots)
+                imageFile.delete();
+
             return buffer.array();
 
         }
